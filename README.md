@@ -23,7 +23,7 @@ install wget:
       verbose     => false,
     }
 ```
-or alternatively: 
+or alternatively:
 
 ```puppet
     wget::fetch { 'http://www.google.com/index.html':
@@ -99,6 +99,16 @@ If you want to use your own unless condition, you can do it. This example uses w
         destination => "/var/www/html/latest_wordpress.tar.gz",
         timeout     => 0,
         unless      => "test $(ls -A /var/www/html 2>/dev/null)",
+    }
+```
+
+This preserve the permissions from the source:
+```puppet
+    wget::fetch { 'wordpress':
+        source               => 'https://wordpress.org/latest.tar.gz',
+        destination          => "/var/www/html/latest_wordpress.tar.gz",
+        timeout              => 0,
+        preserve_permissions => true,
     }
 ```
 
