@@ -16,10 +16,10 @@ describe 'wget' do
     it { should_not contain_package('wget').with_ensure('present') }
   end
 
-  context 'version is 1.2.3', :compile do
-    let(:params) { {:version => '1.2.3'} }
+  context 'version is present', :compile do
+    let(:params) { {:version => 'present'} }
 
-    it { should contain_package('wget').with_ensure('1.2.3') }
+    it { should contain_package('wget').with_ensure('present') }
   end
 
   context 'running on OS X', :compile do
@@ -34,9 +34,10 @@ describe 'wget' do
   context 'running on FreeBSD', :compile do
     let(:facts) { {
       :operatingsystem => 'FreeBSD',
-      :kernel => 'FreeBSD'
+      :kernel => 'FreeBSD',
+      :operatingsystemmajrelease => '10'
     } }
 
-    it { should contain_package('ftp/wget') }
+    it { should contain_package('wget') }
   end
 end

@@ -1,6 +1,6 @@
 {
   "name": "maestrodev-wget",
-  "version": "1.7.2",
+  "version": "1.7.4",
   "source": "https://github.com/maestrodev/puppet-wget.git",
   "author": "maestrodev",
   "license": "Apache-2.0",
@@ -112,6 +112,13 @@
         "11",
         "12",
         "13"
+      ]
+    },
+    {
+      "operatingsystem": "FreeBSD",
+      "operatingsystemrelease": [
+        "9",
+        "10"
       ]
     }
   ]

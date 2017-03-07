@@ -12,27 +12,34 @@
 ################################################################################
 define wget::fetch (
   $destination,
-  $source               = $title,
-  $source_hash          = undef,
-  $timeout              = '0',
-  $verbose              = false,
-  $redownload           = false,
-  $nocheckcertificate   = false,
-  $no_cookies           = false,
-  $execuser             = undef,
-  $user                 = undef,
-  $password             = undef,
-  $headers              = undef,
-  $preserve_permissions = undef,
-  $cache_dir            = undef,
-  $cache_file           = undef,
-  $flags                = undef,
-  $backup               = true,
-  $mode                 = undef,
-  $unless               = undef,
+  $source             = $title,
+  $source_hash        = undef,
+  $timeout            = '0',
+  $verbose            = false,
+  $redownload         = false,
+  $nocheckcertificate = false,
+  $no_cookies         = false,
+  $execuser           = undef,
+  $user               = undef,
+  $password           = undef,
+  $headers            = undef,
+  $cache_dir          = undef,
+  $cache_file         = undef,
+  $flags              = undef,
+  $backup             = true,
+  $group              = undef,
+  $mode               = undef,
+  $unless             = undef,
 ) {
 
   include wget
+
+  # The strict_variables setting aborts compilation referencing unset variables.
+  $strict = defined('$::settings::strict_variables') and $::settings::strict_variables
+
+  if $strict and !defined('$schedule') {
+    $schedule = undef
+  }
 
   # Does $destination end in a slash? If so, treat as a directory
   case $destination   {
@@ -48,13 +55,24 @@ define wget::fetch (
     }
   }
 
-  $http_proxy_env = $::http_proxy ? {
-    undef   => [],
-    default => [ "HTTP_PROXY=${::http_proxy}", "http_proxy=${::http_proxy}" ],
+  if $strict and !defined('$::http_proxy') {
+    $http_proxy = undef
+  } else {
+    $http_proxy = $::http_proxy
   }
-  $https_proxy_env = $::https_proxy ? {
+  if $strict and !defined('$::https_proxy') {
+    $https_proxy = undef
+  } else {
+    $https_proxy = $::https_proxy
+  }
+
+  $http_proxy_env = $http_proxy ? {
     undef   => [],
-    default => [ "HTTPS_PROXY=${::https_proxy}", "https_proxy=${::https_proxy}" ],
+    default => [ "HTTP_PROXY=${http_proxy}", "http_proxy=${http_proxy}" ],
+  }
+  $https_proxy_env = $https_proxy ? {
+    undef   => [],
+    default => [ "HTTPS_PROXY=${https_proxy}", "https_proxy=${https_proxy}" ],
   }
   $password_env = $user ? {
     undef   => [],
@@ -119,11 +137,6 @@ define wget::fetch (
     }
   }
 
-  $preserve_permissions_option = $preserve_permissions ? {
-    true  => ' --preserve-permissions',
-    false => ''
-  }
-
   $output_option = $cache_dir ? {
     undef   => " --output-document=\"${_destination}\"",
     default => " -N -P \"${cache_dir}\"",
@@ -151,10 +164,10 @@ define wget::fetch (
 
   case $source_hash{
     '', undef: {
-      $command = "wget ${verbose_option}${nocheckcert_option}${no_cookies_option}${header_option}${user_option}${preserve_permissions_option}${output_option}${flags_joined} \"${source}\""
+      $command = "wget ${verbose_option}${nocheckcert_option}${no_cookies_option}${header_option}${user_option}${output_option}${flags_joined} \"${source}\""
     }
     default: {
-      $command = "wget ${verbose_option}${nocheckcert_option}${no_cookies_option}${header_option}${user_option}${preserve_permissions_option}${output_option}${flags_joined} \"${source}\" && echo '${source_hash}  ${_destination}' | md5sum -c --quiet"
+      $command = "wget ${verbose_option}${nocheckcert_option}${no_cookies_option}${header_option}${user_option}${output_option}${flags_joined} \"${source}\" && echo '${source_hash}  ${_destination}' | md5sum -c --quiet"
     }
   }
 
@@ -168,7 +181,7 @@ define wget::fetch (
     environment => $environment,
     user        => $exec_user,
     path        => $exec_path,
-    require     => Class['wget'],
+    require     => Package['wget'],
     schedule    => $schedule,
   }
 
@@ -181,6 +194,7 @@ define wget::fetch (
       ensure   => file,
       source   => "${cache_dir}/${cache}",
       owner    => $execuser,
+      group    => $group,
       mode     => $mode,
       require  => Exec["wget-${name}"],
       backup   => $backup,
